@@ -68,3 +68,30 @@ fn read_pubkey(data: &[u8], off: usize) -> Pubkey {
     Pubkey::new_from_array(b)
 }
 
+pub fn read_market_header(market: &AccountInfo) -> Result<MarketHeader> {
+    require_keys_eq!(
+        *market.owner,
+        MANIFEST_PROGRAM_ID,
+        SprentError::MarketOwnerMismatch
+    );
+    let data = market.try_borrow_data()?;
+    require!(
+        data.len() >= MARKET_HEADER_LEN,
+        SprentError::MarketLayoutMismatch
+    );
+    let mut d = [0u8; 8];
+    d.copy_from_slice(&data[0..8]);
+    require!(
+        u64::from_le_bytes(d) == MARKET_DISCRIMINANT,
+        SprentError::MarketLayoutMismatch
+    );
+    Ok(MarketHeader {
+        base_decimals: data[OFF_BASE_DECIMALS],
+        quote_decimals: data[OFF_QUOTE_DECIMALS],
+        base_mint: read_pubkey(&data, OFF_BASE_MINT),
+        quote_mint: read_pubkey(&data, OFF_QUOTE_MINT),
+        base_vault: read_pubkey(&data, OFF_BASE_VAULT),
+        quote_vault: read_pubkey(&data, OFF_QUOTE_VAULT),
+    })
+}
+
