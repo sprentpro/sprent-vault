@@ -110,3 +110,24 @@ pub fn crystallize(
     })
 }
 
+pub fn redeem_quote(shares: u128, ep: &EpochPrice) -> Result<u64, AcctError> {
+    if ep.shares == 0 {
+        return Ok(0);
+    }
+    let v = shares.checked_mul(ep.nav).ok_or(AcctError::Overflow)? / ep.shares;
+    u64::try_from(v).map_err(|_| AcctError::Overflow)
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct NavInputs {
+    pub tracked_idle_quote: u64,
+    pub tracked_idle_base: u64,
+
+    pub seat_quote: u64,
+    pub seat_base: u64,
+    pub pending_deposits_quote: u64,
+    pub payable_withdrawals_quote: u64,
+    pub fee_payable_quote: u64,
+    pub price_fp: u128,
+}
+
