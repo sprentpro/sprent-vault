@@ -66,3 +66,47 @@ pub struct Crystallized {
     pub hwm_after: u128,
 }
 
+pub fn crystallize(
+    shares: u128,
+    hwm: u128,
+    pps: u128,
+    fee_bps: u16,
+) -> Result<Crystallized, AcctError> {
+    if shares == 0 || pps <= hwm {
+        return Ok(Crystallized {
+            fee_quote: 0,
+            fee_shares: 0,
+            shares_after: shares,
+            hwm_after: hwm,
+        });
+    }
+    let gain = pps - hwm;
+    let num = (fee_bps as u128)
+        .checked_mul(gain)
+        .and_then(|x| x.checked_mul(shares))
+        .ok_or(AcctError::Overflow)?;
+
+    let den = 10_000u128 * PPS_SCALE;
+    if num < den {
+        return Ok(Crystallized {
+            fee_quote: 0,
+            fee_shares: 0,
+            shares_after: shares,
+            hwm_after: pps,
+        });
+    }
+    let fee = num.div_ceil(den);
+    let fee_shares = fee
+        .checked_mul(PPS_SCALE)
+        .ok_or(AcctError::Overflow)?
+        .div_ceil(pps)
+        .min(shares);
+    let fee_quote = u64::try_from(fee).map_err(|_| AcctError::Overflow)?;
+    Ok(Crystallized {
+        fee_quote,
+        fee_shares,
+        shares_after: shares - fee_shares,
+        hwm_after: pps,
+    })
+}
+
