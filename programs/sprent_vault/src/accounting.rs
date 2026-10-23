@@ -131,3 +131,17 @@ pub struct NavInputs {
     pub price_fp: u128,
 }
 
+pub fn nav_quote(i: &NavInputs) -> Result<i128, AcctError> {
+    let base = (i.tracked_idle_base as u128)
+        .checked_add(i.seat_base as u128)
+        .ok_or(AcctError::Overflow)?;
+    let base_val = base.checked_mul(i.price_fp).ok_or(AcctError::Overflow)? / PRICE_FP_ONE;
+    let assets = (i.tracked_idle_quote as i128)
+        + (i.seat_quote as i128)
+        + i128::try_from(base_val).map_err(|_| AcctError::Overflow)?;
+    Ok(assets
+        - i.pending_deposits_quote as i128
+        - i.payable_withdrawals_quote as i128
+        - i.fee_payable_quote as i128)
+}
+
