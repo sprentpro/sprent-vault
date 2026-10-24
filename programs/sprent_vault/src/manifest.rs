@@ -154,3 +154,20 @@ pub fn token_move_ix(
     })
 }
 
+pub fn batch_update_ix(
+    trader: Pubkey,
+    market: Pubkey,
+    system_program: Pubkey,
+    batch: &WireBatch,
+) -> Result<Instruction> {
+    Ok(Instruction {
+        program_id: MANIFEST_PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(trader, true),
+            AccountMeta::new(market, false),
+            AccountMeta::new_readonly(system_program, false),
+        ],
+        data: data_with_tag(TAG_BATCH_UPDATE, batch)?,
+    })
+}
+
