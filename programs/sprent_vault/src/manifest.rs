@@ -263,3 +263,12 @@ fn rd_u64(d: &[u8], off: usize) -> Result<u64> {
     b.copy_from_slice(s);
     Ok(u64::from_le_bytes(b))
 }
+fn rd_u128(d: &[u8], off: usize) -> Result<u128> {
+    let s = d
+        .get(off..off + 16)
+        .ok_or_else(|| error!(SprentError::MarketLayoutMismatch))?;
+    let mut b = [0u8; 16];
+    b.copy_from_slice(s);
+    Ok(u128::from_le_bytes(b))
+}
+
