@@ -111,3 +111,15 @@ fn data_with_tag<T: AnchorSerialize>(tag: u8, params: &T) -> Result<Vec<u8>> {
     Ok(data)
 }
 
+pub fn claim_seat_ix(trader: Pubkey, market: Pubkey, system_program: Pubkey) -> Instruction {
+    Instruction {
+        program_id: MANIFEST_PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(trader, true),
+            AccountMeta::new(market, false),
+            AccountMeta::new_readonly(system_program, false),
+        ],
+        data: vec![TAG_CLAIM_SEAT],
+    }
+}
+
