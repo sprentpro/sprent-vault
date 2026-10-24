@@ -123,3 +123,34 @@ pub fn claim_seat_ix(trader: Pubkey, market: Pubkey, system_program: Pubkey) -> 
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn token_move_ix(
+    tag: u8,
+    trader: Pubkey,
+    market: Pubkey,
+    trader_token: Pubkey,
+    market_vault: Pubkey,
+    token_program: Pubkey,
+    mint: Pubkey,
+    amount_atoms: u64,
+) -> Result<Instruction> {
+    Ok(Instruction {
+        program_id: MANIFEST_PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(trader, true),
+            AccountMeta::new(market, false),
+            AccountMeta::new(trader_token, false),
+            AccountMeta::new(market_vault, false),
+            AccountMeta::new_readonly(token_program, false),
+            AccountMeta::new_readonly(mint, false),
+        ],
+        data: data_with_tag(
+            tag,
+            &WireAmount {
+                amount_atoms,
+                trader_index_hint: None,
+            },
+        )?,
+    })
+}
+
