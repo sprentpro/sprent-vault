@@ -103,3 +103,11 @@ pub fn market_vault_address(market: &Pubkey, mint: &Pubkey) -> Pubkey {
     .0
 }
 
+fn data_with_tag<T: AnchorSerialize>(tag: u8, params: &T) -> Result<Vec<u8>> {
+    let mut data = vec![tag];
+    params
+        .serialize(&mut data)
+        .map_err(|_| error!(SprentError::SerializationFailed))?;
+    Ok(data)
+}
+
