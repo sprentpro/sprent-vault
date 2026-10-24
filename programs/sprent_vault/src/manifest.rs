@@ -249,3 +249,9 @@ impl VenueView {
     }
 }
 
+fn rd_u32(d: &[u8], off: usize) -> Result<u32> {
+    let s = d
+        .get(off..off + 4)
+        .ok_or_else(|| error!(SprentError::MarketLayoutMismatch))?;
+    Ok(u32::from_le_bytes([s[0], s[1], s[2], s[3]]))
+}
