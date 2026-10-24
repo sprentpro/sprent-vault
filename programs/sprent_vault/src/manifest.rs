@@ -95,3 +95,11 @@ pub fn read_market_header(market: &AccountInfo) -> Result<MarketHeader> {
     })
 }
 
+pub fn market_vault_address(market: &Pubkey, mint: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(
+        &[MARKET_VAULT_SEED, market.as_ref(), mint.as_ref()],
+        &MANIFEST_PROGRAM_ID,
+    )
+    .0
+}
+
