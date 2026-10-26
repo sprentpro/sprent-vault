@@ -86,3 +86,13 @@ pub fn order_price_fp(mantissa: u32, exponent: i8) -> Result<u128> {
         .ok_or_else(|| error!(SprentError::PriceOutOfRange))
 }
 
+pub fn scale_pow10(v: u128, exp: i32) -> Option<u128> {
+    if exp >= 0 {
+        let p = 10u128.checked_pow(exp as u32)?;
+        v.checked_mul(p)
+    } else {
+        let p = 10u128.checked_pow((-exp) as u32)?;
+        Some(v / p)
+    }
+}
+
