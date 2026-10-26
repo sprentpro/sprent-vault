@@ -96,3 +96,14 @@ pub fn scale_pow10(v: u128, exp: i32) -> Option<u128> {
     }
 }
 
+pub fn within_band(order_fp: u128, oracle_fp: u128, band_bps: u16) -> Result<bool> {
+    let diff = order_fp.abs_diff(oracle_fp);
+    let lhs = diff
+        .checked_mul(10_000)
+        .ok_or_else(|| error!(SprentError::MathOverflow))?;
+    let rhs = oracle_fp
+        .checked_mul(band_bps as u128)
+        .ok_or_else(|| error!(SprentError::MathOverflow))?;
+    Ok(lhs <= rhs)
+}
+
