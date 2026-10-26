@@ -54,3 +54,29 @@ pub fn read_price_update(ai: &AccountInfo, expected_feed: &[u8; 32]) -> Result<O
     })
 }
 
+pub fn checked_oracle_fp(
+    p: &OraclePrice,
+    now_ts: i64,
+    max_age_s: u32,
+    max_conf_bps: u16,
+    base_decimals: u8,
+    quote_decimals: u8,
+) -> Result<u128> {
+    require!(p.price > 0, SprentError::OraclePriceInvalid);
+    let age = now_ts.saturating_sub(p.publish_time);
+    require!(age <= max_age_s as i64, SprentError::OracleStale);
+    let price = p.price as u128;
+    require!(
+        (p.conf as u128)
+            .checked_mul(10_000)
+            .ok_or_else(|| error!(SprentError::MathOverflow))?
+            <= price
+                .checked_mul(max_conf_bps as u128)
+                .ok_or_else(|| error!(SprentError::MathOverflow))?,
+        SprentError::OracleConfidenceTooWide
+    );
+
+    let exp = p.expo + quote_decimals as i32 - base_decimals as i32 + FP_DECIMALS;
+    scale_pow10(price, exp).ok_or_else(|| error!(SprentError::PriceOutOfRange))
+}
+
