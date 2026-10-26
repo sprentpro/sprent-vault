@@ -107,3 +107,26 @@ pub fn within_band(order_fp: u128, oracle_fp: u128, band_bps: u16) -> Result<boo
     Ok(lhs <= rhs)
 }
 
+pub fn bid_notional_quote(base_atoms: u64, price_fp: u128) -> Result<u128> {
+    let one = 10u128.pow(FP_DECIMALS as u32);
+    let num = (base_atoms as u128)
+        .checked_mul(price_fp)
+        .ok_or_else(|| error!(SprentError::MathOverflow))?;
+    Ok(num.div_ceil(one))
+}
+
+pub const ORACLE_PYTH: u8 = 0;
+
+pub const ORACLE_PEG: u8 = 1;
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct OracleRead {
+    pub price_fp: u128,
+
+    pub freeze: u8,
+    pub price: i64,
+    pub conf: u64,
+    pub expo: i32,
+    pub publish_time: i64,
+}
+
