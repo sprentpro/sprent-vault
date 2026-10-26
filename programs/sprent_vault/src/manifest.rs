@@ -272,3 +272,16 @@ fn rd_u128(d: &[u8], off: usize) -> Result<u128> {
     Ok(u128::from_le_bytes(b))
 }
 
+fn node(dynamic_len: usize, index: u32) -> Result<usize> {
+    let i = index as usize;
+    require!(
+        i % 8 == 0 && i + BLOCK <= dynamic_len,
+        SprentError::MarketLayoutMismatch
+    );
+    Ok(MARKET_HEADER_LEN + i)
+}
+
+const ORDER_BASE: usize = NODE_VALUE + 16;
+const ORDER_SEQ: usize = NODE_VALUE + 24;
+const ORDER_LAST_VALID_SLOT: usize = NODE_VALUE + 36;
+
