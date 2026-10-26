@@ -27,3 +27,30 @@ fn rd<const N: usize>(data: &[u8], off: usize) -> Result<[u8; N]> {
     Ok(b)
 }
 
+pub fn read_price_update(ai: &AccountInfo, expected_feed: &[u8; 32]) -> Result<OraclePrice> {
+    require_keys_eq!(
+        *ai.owner,
+        PYTH_RECEIVER_ID,
+        SprentError::OracleOwnerMismatch
+    );
+    let data = ai.try_borrow_data()?;
+    require!(
+        rd::<8>(&data, 0)? == PRICE_UPDATE_V2_DISCRIMINATOR,
+        SprentError::OracleLayoutMismatch
+    );
+    let level = rd::<1>(&data, 40)?[0];
+    let off = match level {
+        VERIFICATION_FULL => 41,
+        VERIFICATION_PARTIAL => return err!(SprentError::OracleNotFullyVerified),
+        _ => return err!(SprentError::OracleLayoutMismatch),
+    };
+    let feed = rd::<32>(&data, off)?;
+    require!(&feed == expected_feed, SprentError::OracleFeedMismatch);
+    Ok(OraclePrice {
+        price: i64::from_le_bytes(rd::<8>(&data, off + 32)?),
+        conf: u64::from_le_bytes(rd::<8>(&data, off + 40)?),
+        expo: i32::from_le_bytes(rd::<4>(&data, off + 48)?),
+        publish_time: i64::from_le_bytes(rd::<8>(&data, off + 52)?),
+    })
+}
+
