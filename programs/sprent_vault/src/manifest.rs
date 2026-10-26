@@ -285,3 +285,90 @@ const ORDER_BASE: usize = NODE_VALUE + 16;
 const ORDER_SEQ: usize = NODE_VALUE + 24;
 const ORDER_LAST_VALID_SLOT: usize = NODE_VALUE + 36;
 
+pub fn read_venue(market: &AccountInfo, trader: &Pubkey, now_slot: u64) -> Result<VenueView> {
+    read_market_header(market)?;
+    let data = market.try_borrow_data()?;
+    let d: &[u8] = &data;
+    let dyn_len = d.len() - MARKET_HEADER_LEN;
+    let mut v = VenueView::default();
+
+    let mut idx = rd_u32(d, OFF_SEATS_ROOT)?;
+    let mut seat_index = NIL_INDEX;
+    for _ in 0..MAX_TREE_DEPTH {
+        if idx == NIL_INDEX {
+            break;
+        }
+        let n = node(dyn_len, idx)?;
+        let key = &d[n + SEAT_TRADER..n + SEAT_TRADER + 32];
+        match trader.as_ref().cmp(key) {
+            core::cmp::Ordering::Equal => {
+                seat_index = idx;
+                v.seat_found = true;
+                v.seat_base = rd_u64(d, n + SEAT_BASE)?;
+                v.seat_quote = rd_u64(d, n + SEAT_QUOTE)?;
+                break;
+            }
+            core::cmp::Ordering::Less => idx = rd_u32(d, n + NODE_LEFT)?,
+            core::cmp::Ordering::Greater => idx = rd_u32(d, n + NODE_RIGHT)?,
+        }
+    }
+    require!(
+        v.seat_found || idx == NIL_INDEX,
+        SprentError::MarketLayoutMismatch
+    );
+
+    let mut visited: u32 = 0;
+    for (root_off, is_bid) in [(OFF_BIDS_ROOT, true), (OFF_ASKS_ROOT, false)] {
+        let mut stack = [NIL_INDEX; MAX_TREE_DEPTH];
+        let mut sp = 0usize;
+        let root = rd_u32(d, root_off)?;
+        if root != NIL_INDEX {
+            stack[0] = root;
+            sp = 1;
+        }
+        while sp > 0 {
+            sp -= 1;
+            let i = stack[sp];
+            visited += 1;
+            require!(
+                visited <= MAX_ORDER_NODES,
+                SprentError::MarketLayoutMismatch
+            );
+            let n = node(dyn_len, i)?;
+            if v.seat_found && rd_u32(d, n + ORDER_TRADER_INDEX)? == seat_index {
+                let k = v.vault_orders as usize;
+                require!(k < MAX_VAULT_ORDERS, SprentError::TooManyOpenOrders);
+                let lvs = rd_u32(d, n + ORDER_LAST_VALID_SLOT)?;
+                v.orders[k] = VaultOrder {
+                    seq: rd_u64(d, n + ORDER_SEQ)?,
+                    index: i,
+                    is_bid,
+                    expired: lvs != 0 && (lvs as u64) <= now_slot,
+                    base_atoms: rd_u64(d, n + ORDER_BASE)?,
+                    price_raw: rd_u128(d, n + ORDER_PRICE)?,
+                };
+                v.vault_orders += 1;
+            }
+            for child_off in [NODE_LEFT, NODE_RIGHT] {
+                let c = rd_u32(d, n + child_off)?;
+                if c != NIL_INDEX {
+                    require!(sp < MAX_TREE_DEPTH, SprentError::MarketLayoutMismatch);
+                    stack[sp] = c;
+                    sp += 1;
+                }
+            }
+        }
+    }
+
+    for (best_off, slot) in [
+        (OFF_BIDS_BEST, &mut v.best_bid_fp),
+        (OFF_ASKS_BEST, &mut v.best_ask_fp),
+    ] {
+        let b = rd_u32(d, best_off)?;
+        if b != NIL_INDEX {
+            let n = node(dyn_len, b)?;
+            *slot = rd_u128(d, n + ORDER_PRICE)?.checked_mul(MANIFEST_PRICE_TO_FP);
+        }
+    }
+    Ok(v)
+}
