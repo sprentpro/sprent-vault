@@ -130,3 +130,61 @@ pub struct OracleRead {
     pub publish_time: i64,
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn read_oracle(
+    mode: u8,
+    ai: &AccountInfo,
+    feed: &[u8; 32],
+    now_ts: i64,
+    max_age_s: u32,
+    max_conf_bps: u16,
+    base_decimals: u8,
+    quote_decimals: u8,
+) -> Result<OracleRead> {
+    use crate::state::freeze_reason as fr;
+    let exp_shift = quote_decimals as i32 - base_decimals as i32 + FP_DECIMALS;
+    match mode {
+        ORACLE_PEG => {
+            require_keys_eq!(
+                *ai.key,
+                anchor_lang::system_program::ID,
+                SprentError::OracleOwnerMismatch
+            );
+            let price_fp =
+                scale_pow10(1, exp_shift).ok_or_else(|| error!(SprentError::PriceOutOfRange))?;
+            Ok(OracleRead {
+                price_fp,
+                freeze: fr::NONE,
+                price: 1,
+                conf: 0,
+                expo: 0,
+                publish_time: now_ts,
+            })
+        }
+        ORACLE_PYTH => {
+            let px = read_price_update(ai, feed)?;
+            let mut r = OracleRead {
+                price_fp: 0,
+                freeze: fr::NONE,
+                price: px.price,
+                conf: px.conf,
+                expo: px.expo,
+                publish_time: px.publish_time,
+            };
+            if px.price <= 0 {
+                r.freeze = fr::ORACLE_PRICE;
+                return Ok(r);
+            }
+            r.price_fp = scale_pow10(px.price as u128, px.expo + exp_shift)
+                .ok_or_else(|| error!(SprentError::PriceOutOfRange))?;
+            if now_ts.saturating_sub(px.publish_time) > max_age_s as i64 {
+                r.freeze = fr::ORACLE_STALE;
+            } else if (px.conf as u128) * 10_000 > (px.price as u128) * max_conf_bps as u128 {
+                r.freeze = fr::ORACLE_CONFIDENCE;
+            }
+            Ok(r)
+        }
+        _ => err!(SprentError::InvalidParams),
+    }
+}
+
