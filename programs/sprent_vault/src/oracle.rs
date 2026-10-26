@@ -80,3 +80,9 @@ pub fn checked_oracle_fp(
     scale_pow10(price, exp).ok_or_else(|| error!(SprentError::PriceOutOfRange))
 }
 
+pub fn order_price_fp(mantissa: u32, exponent: i8) -> Result<u128> {
+    require!(mantissa > 0, SprentError::PriceOutOfRange);
+    scale_pow10(mantissa as u128, exponent as i32 + FP_DECIMALS)
+        .ok_or_else(|| error!(SprentError::PriceOutOfRange))
+}
+
