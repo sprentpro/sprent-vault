@@ -188,3 +188,51 @@ pub fn read_oracle(
     }
 }
 
+pub fn require_usable(r: &OracleRead) -> Result<u128> {
+    use crate::state::freeze_reason as fr;
+    match r.freeze {
+        fr::NONE => Ok(r.price_fp),
+        fr::ORACLE_STALE => err!(SprentError::OracleStale),
+        fr::ORACLE_CONFIDENCE => err!(SprentError::OracleConfidenceTooWide),
+        _ => err!(SprentError::OraclePriceInvalid),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sol_usdc_scaling() {
+        let p = OraclePrice {
+            price: 15_000_000_000,
+            conf: 1_000_000,
+            expo: -8,
+            publish_time: 100,
+        };
+        let fp = checked_oracle_fp(&p, 110, 60, 100, 9, 6).unwrap();
+        assert_eq!(fp, 150_000_000_000_000_000_000_000);
+
+        assert_eq!(order_price_fp(15, -2).unwrap(), fp);
+        assert!(within_band(order_price_fp(1515, -4).unwrap(), fp, 100).unwrap());
+        assert!(!within_band(order_price_fp(1516, -4).unwrap(), fp, 100).unwrap());
+
+        assert_eq!(bid_notional_quote(1_000_000_000, fp).unwrap(), 150_000_000);
+    }
+
+    #[test]
+    fn stale_and_wide_rejected() {
+        let p = OraclePrice {
+            price: 15_000_000_000,
+            conf: 1_000_000,
+            expo: -8,
+            publish_time: 100,
+        };
+        assert!(checked_oracle_fp(&p, 200, 60, 100, 9, 6).is_err());
+        let wide = OraclePrice {
+            conf: 1_000_000_000,
+            ..p
+        };
+        assert!(checked_oracle_fp(&wide, 110, 60, 10, 9, 6).is_err());
+    }
+}
