@@ -24,3 +24,11 @@ function nonNeg(v: bigint, what: string): bigint {
   if (v < ZERO) throw new AccountingError("NEGATIVE", `${what} must be >= 0`);
   return v;
 }
+
+function floorDiv(a: bigint, b: bigint): bigint {
+  return a / b;
+}
+
+export function ceilDiv(a: bigint, b: bigint): bigint {
+  return a === ZERO ? ZERO : (a - ONE) / b + ONE;
+}
