@@ -19,3 +19,8 @@ export class AccountingError extends Error {
     this.name = "AccountingError";
   }
 }
+
+function nonNeg(v: bigint, what: string): bigint {
+  if (v < ZERO) throw new AccountingError("NEGATIVE", `${what} must be >= 0`);
+  return v;
+}
