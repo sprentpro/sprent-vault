@@ -1,0 +1,23 @@
+[toolchain]
+anchor_version = "0.31.1"
+solana_version = "3.0.0"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+sprent_vault = "GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g"
+
+[programs.mainnet]
+sprent_vault = "GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"
