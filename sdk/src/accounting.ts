@@ -50,3 +50,24 @@ export interface MintResult {
   deadShares: bigint;
   state: VaultState;
 }
+
+export function mintShares(depositAtoms: bigint, s: VaultState): MintResult {
+  nonNeg(depositAtoms, "deposit");
+  if (s.totalShares === ZERO) {
+    if (depositAtoms < MIN_FIRST_DEPOSIT) throw new AccountingError("FIRST_DEPOSIT_TOO_SMALL", "first deposit below the minimum");
+    const shares = depositAtoms - BOOTSTRAP_SHARES;
+    return {
+      sharesMinted: shares,
+      deadShares: BOOTSTRAP_SHARES,
+      state: { totalAssets: s.totalAssets + depositAtoms, totalShares: depositAtoms },
+    };
+  }
+  if (s.totalAssets === ZERO) throw new AccountingError("EMPTY_VAULT", "vault has shares but no assets");
+  const shares = floorDiv(depositAtoms * s.totalShares, s.totalAssets);
+  if (shares === ZERO) throw new AccountingError("ZERO_SHARES", "deposit buys zero shares");
+  return {
+    sharesMinted: shares,
+    deadShares: ZERO,
+    state: { totalAssets: s.totalAssets + depositAtoms, totalShares: s.totalShares + shares },
+  };
+}
