@@ -154,3 +154,11 @@ export function withdraw(pos: Position, s: VaultState, epochPpsE12: bigint, shar
     state: { totalAssets: c.state.totalAssets - redeem, totalShares: c.state.totalShares - take },
   };
 }
+
+export interface NavInputs {
+  trackedQuoteAtoms: bigint;
+  trackedBaseAtoms: bigint;
+  actualQuoteAtoms: bigint;
+  actualBaseAtoms: bigint;
+  markPriceE12: bigint;
+}
