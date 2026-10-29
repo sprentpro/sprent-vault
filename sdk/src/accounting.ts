@@ -32,3 +32,8 @@ function floorDiv(a: bigint, b: bigint): bigint {
 export function ceilDiv(a: bigint, b: bigint): bigint {
   return a === ZERO ? ZERO : (a - ONE) / b + ONE;
 }
+
+export interface VaultState {
+  totalAssets: bigint;
+  totalShares: bigint;
+}
