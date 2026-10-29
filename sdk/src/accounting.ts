@@ -79,3 +79,10 @@ export function sharesAtPps(depositAtoms: bigint, ppsE12: bigint): bigint {
   if (shares === ZERO) throw new AccountingError("ZERO_SHARES", "deposit buys zero shares");
   return shares;
 }
+
+export function redeemShares(shares: bigint, s: VaultState): bigint {
+  nonNeg(shares, "shares");
+  if (s.totalShares === ZERO) return ZERO;
+  if (shares > s.totalShares) throw new AccountingError("INSUFFICIENT_SHARES", "redeeming more shares than exist");
+  return floorDiv(shares * s.totalAssets, s.totalShares);
+}
