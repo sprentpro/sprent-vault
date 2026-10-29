@@ -92,3 +92,8 @@ export function redeemValue(shares: bigint, epochPpsE12: bigint): bigint {
   nonNeg(epochPpsE12, "pps");
   return floorDiv(shares * epochPpsE12, PPS_SCALE);
 }
+
+export interface Position {
+  shares: bigint;
+  hwmPpsE12: bigint;
+}
