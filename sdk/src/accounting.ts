@@ -71,3 +71,11 @@ export function mintShares(depositAtoms: bigint, s: VaultState): MintResult {
     state: { totalAssets: s.totalAssets + depositAtoms, totalShares: s.totalShares + shares },
   };
 }
+
+export function sharesAtPps(depositAtoms: bigint, ppsE12: bigint): bigint {
+  nonNeg(depositAtoms, "deposit");
+  if (ppsE12 <= ZERO) throw new AccountingError("EMPTY_VAULT", "pps must be > 0");
+  const shares = floorDiv(depositAtoms * PPS_SCALE, ppsE12);
+  if (shares === ZERO) throw new AccountingError("ZERO_SHARES", "deposit buys zero shares");
+  return shares;
+}
