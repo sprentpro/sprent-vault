@@ -105,3 +105,30 @@ export interface CrystalliseResult {
   position: Position;
   state: VaultState;
 }
+
+export function crystallise(pos: Position, s: VaultState, epochPpsE12: bigint, feeBps: bigint = DEFAULT_PERF_FEE_BPS): CrystalliseResult {
+  nonNeg(pos.shares, "shares");
+  if (feeBps < ZERO || feeBps > BPS_DENOM) throw new AccountingError("BAD_BPS", "fee bps out of range");
+  if (pos.shares > s.totalShares) throw new AccountingError("INSUFFICIENT_SHARES", "position larger than the vault");
+  const gain = epochPpsE12 > pos.hwmPpsE12 ? epochPpsE12 - pos.hwmPpsE12 : ZERO;
+  const num = feeBps * gain * pos.shares;
+  const den = BPS_DENOM * PPS_SCALE;
+  const newHwm = epochPpsE12 > pos.hwmPpsE12 ? epochPpsE12 : pos.hwmPpsE12;
+  if (num < den || epochPpsE12 <= ZERO) {
+    return { gainPpsE12: gain, feeAtoms: ZERO, feeShares: ZERO, position: { shares: pos.shares, hwmPpsE12: newHwm }, state: s };
+  }
+  let fee = ceilDiv(num, den);
+  let feeShares = ceilDiv(fee * PPS_SCALE, epochPpsE12);
+  if (feeShares > pos.shares) {
+    feeShares = pos.shares;
+    fee = redeemValue(feeShares, epochPpsE12);
+  }
+  if (fee > s.totalAssets) throw new AccountingError("NEGATIVE", "fee larger than vault assets");
+  return {
+    gainPpsE12: gain,
+    feeAtoms: fee,
+    feeShares,
+    position: { shares: pos.shares - feeShares, hwmPpsE12: newHwm },
+    state: { totalAssets: s.totalAssets - fee, totalShares: s.totalShares - feeShares },
+  };
+}
