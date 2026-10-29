@@ -97,3 +97,11 @@ export interface Position {
   shares: bigint;
   hwmPpsE12: bigint;
 }
+
+export interface CrystalliseResult {
+  gainPpsE12: bigint;
+  feeAtoms: bigint;
+  feeShares: bigint;
+  position: Position;
+  state: VaultState;
+}
