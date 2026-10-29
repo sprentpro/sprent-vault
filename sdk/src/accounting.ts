@@ -162,3 +162,12 @@ export interface NavInputs {
   actualBaseAtoms: bigint;
   markPriceE12: bigint;
 }
+
+export interface NavResult {
+  navQuoteAtoms: bigint;
+  surplusQuoteAtoms: bigint;
+  surplusBaseAtoms: bigint;
+  shortfallQuoteAtoms: bigint;
+  shortfallBaseAtoms: bigint;
+  reconciled: boolean;
+}
