@@ -86,3 +86,9 @@ export function redeemShares(shares: bigint, s: VaultState): bigint {
   if (shares > s.totalShares) throw new AccountingError("INSUFFICIENT_SHARES", "redeeming more shares than exist");
   return floorDiv(shares * s.totalAssets, s.totalShares);
 }
+
+export function redeemValue(shares: bigint, epochPpsE12: bigint): bigint {
+  nonNeg(shares, "shares");
+  nonNeg(epochPpsE12, "pps");
+  return floorDiv(shares * epochPpsE12, PPS_SCALE);
+}
