@@ -132,3 +132,10 @@ export function crystallise(pos: Position, s: VaultState, epochPpsE12: bigint, f
     state: { totalAssets: s.totalAssets - fee, totalShares: s.totalShares - feeShares },
   };
 }
+
+export interface WithdrawResult {
+  crystallised: CrystalliseResult;
+  redeemAtoms: bigint;
+  position: Position;
+  state: VaultState;
+}
