@@ -44,3 +44,9 @@ export function ppsOf(s: VaultState): bigint {
   if (s.totalShares === ZERO) return PPS_SCALE;
   return floorDiv(s.totalAssets * PPS_SCALE, s.totalShares);
 }
+
+export interface MintResult {
+  sharesMinted: bigint;
+  deadShares: bigint;
+  state: VaultState;
+}
