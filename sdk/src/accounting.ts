@@ -37,3 +37,10 @@ export interface VaultState {
   totalAssets: bigint;
   totalShares: bigint;
 }
+
+export function ppsOf(s: VaultState): bigint {
+  nonNeg(s.totalAssets, "totalAssets");
+  nonNeg(s.totalShares, "totalShares");
+  if (s.totalShares === ZERO) return PPS_SCALE;
+  return floorDiv(s.totalAssets * PPS_SCALE, s.totalShares);
+}
