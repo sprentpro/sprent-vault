@@ -139,3 +139,18 @@ export interface WithdrawResult {
   position: Position;
   state: VaultState;
 }
+
+export function withdraw(pos: Position, s: VaultState, epochPpsE12: bigint, shares: bigint | "all", feeBps: bigint = DEFAULT_PERF_FEE_BPS): WithdrawResult {
+  const c = crystallise(pos, s, epochPpsE12, feeBps);
+  const take = shares === "all" ? c.position.shares : shares;
+  nonNeg(take, "shares");
+  if (take > c.position.shares) throw new AccountingError("INSUFFICIENT_SHARES", "withdrawing more shares than held");
+  const redeem = redeemShares(take, c.state);
+  if (redeem > c.state.totalAssets) throw new AccountingError("NEGATIVE", "redemption larger than vault assets");
+  return {
+    crystallised: c,
+    redeemAtoms: redeem,
+    position: { shares: c.position.shares - take, hwmPpsE12: c.position.hwmPpsE12 },
+    state: { totalAssets: c.state.totalAssets - redeem, totalShares: c.state.totalShares - take },
+  };
+}
