@@ -228,3 +228,11 @@ export function allocateCreatorFee(grossAtoms: bigint, claimCostAtoms: bigint, b
   const buyback = floorDiv(net * buybackBps, BPS_DENOM);
   return { netAtoms: net, buybackAtoms: buyback, teamAtoms: net - buyback };
 }
+
+export function stakerReward(poolAtoms: bigint, tokenTime: bigint, totalTokenTime: bigint): bigint {
+  nonNeg(poolAtoms, "pool");
+  nonNeg(tokenTime, "tokenTime");
+  if (totalTokenTime <= ZERO) return ZERO;
+  if (tokenTime > totalTokenTime) throw new AccountingError("NEGATIVE", "token-time above the total");
+  return floorDiv(poolAtoms * tokenTime, totalTokenTime);
+}
