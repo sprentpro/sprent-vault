@@ -171,3 +171,20 @@ export interface NavResult {
   shortfallBaseAtoms: bigint;
   reconciled: boolean;
 }
+
+export function computeNav(n: NavInputs, toleranceAtoms: bigint = ZERO): NavResult {
+  for (const [k, v] of Object.entries(n)) nonNeg(v as bigint, k);
+  const navQuoteAtoms = n.trackedQuoteAtoms + floorDiv(n.trackedBaseAtoms * n.markPriceE12, PPS_SCALE);
+  const dq = n.actualQuoteAtoms - n.trackedQuoteAtoms;
+  const db = n.actualBaseAtoms - n.trackedBaseAtoms;
+  const shortQ = dq < ZERO ? -dq : ZERO;
+  const shortB = db < ZERO ? -db : ZERO;
+  return {
+    navQuoteAtoms,
+    surplusQuoteAtoms: dq > ZERO ? dq : ZERO,
+    surplusBaseAtoms: db > ZERO ? db : ZERO,
+    shortfallQuoteAtoms: shortQ,
+    shortfallBaseAtoms: shortB,
+    reconciled: shortQ <= toleranceAtoms && shortB <= toleranceAtoms,
+  };
+}
