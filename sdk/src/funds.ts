@@ -17,3 +17,10 @@ export class FundClassViolation extends Error {
     this.name = "FundClassViolation";
   }
 }
+
+export interface FlowShape {
+  fundClass: FundClass;
+  toClass: FundClass | null;
+  purpose: FlowPurpose;
+  amountAtoms: bigint;
+}
