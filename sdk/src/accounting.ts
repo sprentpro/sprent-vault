@@ -188,3 +188,8 @@ export function computeNav(n: NavInputs, toleranceAtoms: bigint = ZERO): NavResu
     reconciled: shortQ <= toleranceAtoms && shortB <= toleranceAtoms,
   };
 }
+
+export function returnBps(fromPpsE12: bigint, toPpsE12: bigint): number {
+  if (fromPpsE12 <= ZERO) return 0;
+  return Number(((toPpsE12 - fromPpsE12) * BPS_DENOM) / fromPpsE12);
+}
