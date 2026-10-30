@@ -208,3 +208,14 @@ export interface ServiceAllocation {
   teamAtoms: bigint;
   shortfallAtoms: bigint;
 }
+
+export function allocateService(i: ServiceIncome): ServiceAllocation {
+  for (const [k, v] of Object.entries(i)) nonNeg(v as bigint, k);
+  const net = i.grossFeeAtoms - i.externalCostAtoms - i.rebateAtoms - i.opexReserveAtoms;
+  if (net <= ZERO) {
+    return { netDistributableAtoms: ZERO, holderAtoms: ZERO, buybackAtoms: ZERO, teamAtoms: ZERO, shortfallAtoms: -net };
+  }
+  const holder = floorDiv(net * SERVICE_SPLIT_BPS.holder, BPS_DENOM);
+  const buyback = floorDiv(net * SERVICE_SPLIT_BPS.buyback, BPS_DENOM);
+  return { netDistributableAtoms: net, holderAtoms: holder, buybackAtoms: buyback, teamAtoms: net - holder - buyback, shortfallAtoms: ZERO };
+}
