@@ -38,3 +38,20 @@ export const FLOW_RULES: Readonly<Record<FlowPurpose, Rule>> = {
   OPEX: { from: ["SERVICE", "CREATOR_FEE", "TEAM"], to: null },
   TEAM_RETAINED: { from: ["SERVICE", "CREATOR_FEE"], to: "TEAM" },
 };
+
+export function assertFundFlow(f: FlowShape): void {
+  if (f.amountAtoms <= BigInt(0)) throw new FundClassViolation(`${f.purpose}: amount must be positive`);
+  if (f.toClass === "CUSTOMER") throw new FundClassViolation(`${f.purpose}: nothing flows into customer assets except a deposit`);
+  const rule = FLOW_RULES[f.purpose];
+  if (!rule) throw new FundClassViolation(`unknown purpose ${String(f.purpose)}`);
+  if (!rule.from.includes(f.fundClass)) {
+    throw new FundClassViolation(`${f.purpose} cannot be funded from ${f.fundClass}`);
+  }
+  if (rule.to !== f.toClass) {
+    throw new FundClassViolation(`${f.purpose} from ${f.fundClass} must go to ${rule.to ?? "outside"}, not ${f.toClass ?? "outside"}`);
+  }
+}
+
+export function buybackFundClass(source: "CREATOR_FEE" | "SERVICE_FEE"): FundClass {
+  return source === "CREATOR_FEE" ? "CREATOR_FEE" : "SERVICE";
+}
