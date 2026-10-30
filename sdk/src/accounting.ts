@@ -200,3 +200,11 @@ export interface ServiceIncome {
   rebateAtoms: bigint;
   opexReserveAtoms: bigint;
 }
+
+export interface ServiceAllocation {
+  netDistributableAtoms: bigint;
+  holderAtoms: bigint;
+  buybackAtoms: bigint;
+  teamAtoms: bigint;
+  shortfallAtoms: bigint;
+}
