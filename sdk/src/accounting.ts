@@ -236,3 +236,10 @@ export function stakerReward(poolAtoms: bigint, tokenTime: bigint, totalTokenTim
   if (tokenTime > totalTokenTime) throw new AccountingError("NEGATIVE", "token-time above the total");
   return floorDiv(poolAtoms * tokenTime, totalTokenTime);
 }
+
+export function splitRewards(poolAtoms: bigint, tokenTimes: readonly bigint[]): { rewards: bigint[]; carryAtoms: bigint } {
+  const total = tokenTimes.reduce((a, b) => a + b, ZERO);
+  const rewards = tokenTimes.map((t) => stakerReward(poolAtoms, t, total));
+  const paid = rewards.reduce((a, b) => a + b, ZERO);
+  return { rewards, carryAtoms: poolAtoms - paid };
+}
