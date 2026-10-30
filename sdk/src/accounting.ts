@@ -219,3 +219,12 @@ export function allocateService(i: ServiceIncome): ServiceAllocation {
   const buyback = floorDiv(net * SERVICE_SPLIT_BPS.buyback, BPS_DENOM);
   return { netDistributableAtoms: net, holderAtoms: holder, buybackAtoms: buyback, teamAtoms: net - holder - buyback, shortfallAtoms: ZERO };
 }
+
+export function allocateCreatorFee(grossAtoms: bigint, claimCostAtoms: bigint, buybackBps: bigint = CREATOR_BUYBACK_BPS): { netAtoms: bigint; buybackAtoms: bigint; teamAtoms: bigint } {
+  nonNeg(grossAtoms, "gross");
+  nonNeg(claimCostAtoms, "claimCost");
+  if (buybackBps < ZERO || buybackBps > BigInt(5000)) throw new AccountingError("BAD_BPS", "creator buyback bps must be 0..5000");
+  const net = grossAtoms > claimCostAtoms ? grossAtoms - claimCostAtoms : ZERO;
+  const buyback = floorDiv(net * buybackBps, BPS_DENOM);
+  return { netAtoms: net, buybackAtoms: buyback, teamAtoms: net - buyback };
+}
