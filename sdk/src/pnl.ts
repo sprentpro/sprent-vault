@@ -12,3 +12,10 @@ export interface PnlMark {
   at: Date;
   midE12: bigint;
 }
+
+export interface Horizon {
+  seconds: number;
+  fills: number;
+  markoutAtoms: bigint;
+  adverseAtoms: bigint;
+}
