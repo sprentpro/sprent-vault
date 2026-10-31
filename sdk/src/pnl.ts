@@ -19,3 +19,16 @@ export interface Horizon {
   markoutAtoms: bigint;
   adverseAtoms: bigint;
 }
+
+export interface PnlBreakdown {
+  fills: number;
+  marked: number;
+  unmarked: number;
+  headlineFills: number;
+  spreadCaptureAtoms: bigint;
+  adverseSelectionAtoms: bigint;
+  costAtoms: bigint;
+  netAtoms: bigint;
+  horizons: Horizon[];
+  markToleranceSec: number;
+}
