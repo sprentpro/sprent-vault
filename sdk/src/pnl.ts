@@ -7,3 +7,8 @@ export interface PnlFill {
   baseAtoms: bigint;
   quoteAtoms: bigint;
 }
+
+export interface PnlMark {
+  at: Date;
+  midE12: bigint;
+}
