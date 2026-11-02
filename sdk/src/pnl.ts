@@ -71,3 +71,8 @@ export function spreadCapture(f: PnlFill, mid0: bigint): bigint {
   const fair = atMid(f.baseAtoms, mid0);
   return f.deskBought ? fair - f.quoteAtoms : f.quoteAtoms - fair;
 }
+
+export function adverseSelection(f: PnlFill, mid0: bigint, midH: bigint): bigint {
+  const drift = atMid(f.baseAtoms, midH) - atMid(f.baseAtoms, mid0);
+  return f.deskBought ? drift : -drift;
+}
