@@ -76,3 +76,56 @@ export function adverseSelection(f: PnlFill, mid0: bigint, midH: bigint): bigint
   const drift = atMid(f.baseAtoms, midH) - atMid(f.baseAtoms, mid0);
   return f.deskBought ? drift : -drift;
 }
+
+export function decomposePnl(
+  fills: readonly PnlFill[],
+  marksIn: readonly PnlMark[],
+  costAtoms: bigint,
+  opts: { horizons?: number[]; tolSec?: number; headline?: number } = {},
+): PnlBreakdown {
+  const horizons = opts.horizons ?? [5, 60, 300];
+  const headline = opts.headline ?? 60;
+  const tol = opts.tolSec ?? 30;
+  const marks = [...marksIn].sort((a, b) => a.at.getTime() - b.at.getTime());
+  const hz: Horizon[] = horizons.map((s) => ({ seconds: s, fills: 0, markoutAtoms: ZERO, adverseAtoms: ZERO }));
+  let marked = 0;
+  let headlineFills = 0;
+  let spread = ZERO;
+  let adverse = ZERO;
+  for (const f of fills) {
+    const t = f.at.getTime();
+    const m0 = markAtOrBefore(marks, t, tol);
+    if (!m0) continue;
+    marked++;
+    const sc = spreadCapture(f, m0.midE12);
+    horizons.forEach((s, i) => {
+      const mh = markNear(marks, t + s * 1000, tol);
+      if (!mh) return;
+      const a = adverseSelection(f, m0.midE12, mh.midE12);
+      hz[i]!.fills++;
+      hz[i]!.adverseAtoms += a;
+      hz[i]!.markoutAtoms += sc + a;
+      if (s === headline) {
+        headlineFills++;
+        spread += sc;
+        adverse += a;
+      }
+    });
+  }
+  return {
+    fills: fills.length,
+    marked,
+    unmarked: fills.length - marked,
+    headlineFills,
+    spreadCaptureAtoms: spread,
+    adverseSelectionAtoms: adverse,
+    costAtoms,
+    netAtoms: spread + adverse - costAtoms,
+    horizons: hz,
+    markToleranceSec: tol,
+  };
+}
+
+export function lamportsToQuote(lamports: bigint, midE12: bigint): bigint {
+  return (lamports * midE12) / E12;
+}
