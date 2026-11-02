@@ -54,3 +54,13 @@ export function markNear(marks: readonly PnlMark[], t: number, tolSec: number): 
   }
   return best && bestD <= tolSec * 1000 ? best : null;
 }
+
+export function markAtOrBefore(marks: readonly PnlMark[], t: number, tolSec: number): PnlMark | null {
+  let best: PnlMark | null = null;
+  for (const m of marks) {
+    const at = m.at.getTime();
+    if (at > t) break;
+    best = m;
+  }
+  return best && t - best.at.getTime() <= tolSec * 1000 ? best : null;
+}
