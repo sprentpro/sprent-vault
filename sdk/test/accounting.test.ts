@@ -56,6 +56,23 @@ describe("V1-V8 one vault, in sequence", () => {
     A = { shares: m.sharesMinted, hwmPpsE12: ppsOf(s) };
     expect(A.hwmPpsE12).toBe(pps(1));
   });
+
+  it("V2 profit epoch: fee 10% of gain above hwm, paid by burning own shares, pps unchanged", () => {
+    s = { ...s, totalAssets: s.totalAssets + usd(12_000) };
+    const epoch = ppsOf(s);
+    expect(epoch).toBe(pps(1.1));
+    const c = crystallise(A, s, epoch);
+    expect(c.feeAtoms).toBe(B(1_199_999_990));
+    near(c.feeAtoms, 1_200);
+    expect(c.feeShares).toBe(B(1_090_909_082));
+    near(c.feeShares, 1_091);
+    near(c.position.shares, 118_909);
+    expect(c.position.hwmPpsE12).toBe(pps(1.1));
+    near(c.state.totalAssets, 130_800);
+    ppsHeld(epoch, ppsOf(c.state), c.state.totalShares);
+    A = c.position;
+    s = c.state;
+  });
 });
 
 describe("V9-V15 independent", () => {
