@@ -73,6 +73,17 @@ describe("V1-V8 one vault, in sequence", () => {
     A = c.position;
     s = c.state;
   });
+
+  it("V3 deposit at the high: shares at the epoch price, own hwm = entry pps, pps unchanged", () => {
+    const before = ppsOf(s);
+    const m = mintShares(usd(55_000), s);
+    near(m.sharesMinted, 50_000);
+    s = m.state;
+    Bp = { shares: m.sharesMinted, hwmPpsE12: before };
+    near(s.totalShares, 168_909);
+    near(s.totalAssets, 185_800);
+    ppsHeld(before, ppsOf(s), s.totalShares);
+  });
 });
 
 describe("V9-V15 independent", () => {
