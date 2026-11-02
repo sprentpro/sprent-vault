@@ -64,3 +64,10 @@ export function markAtOrBefore(marks: readonly PnlMark[], t: number, tolSec: num
   }
   return best && t - best.at.getTime() <= tolSec * 1000 ? best : null;
 }
+
+const atMid = (base: bigint, midE12: bigint) => (base * midE12) / E12;
+
+export function spreadCapture(f: PnlFill, mid0: bigint): bigint {
+  const fair = atMid(f.baseAtoms, mid0);
+  return f.deskBought ? fair - f.quoteAtoms : f.quoteAtoms - fair;
+}
