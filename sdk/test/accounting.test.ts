@@ -208,6 +208,16 @@ describe("V9-V15 independent", () => {
     }
     expect(() => sharesAtPps(B(1), B("1000000000000000000000000"))).toThrow(AccountingError);
   });
+
+  it("V14 round trip rounds for the vault: 100 in -> 90 shares -> 99 out", () => {
+    const s: VaultState = { totalAssets: B(11_000_000_000), totalShares: B(10_000_000_000) };
+    expect(ppsOf(s)).toBe(pps(1.1));
+    const m = mintShares(B(100), s);
+    expect(m.sharesMinted).toBe(B(90));
+    expect(sharesAtPps(B(100), pps(1.1))).toBe(B(90));
+    expect(redeemValue(B(90), pps(1.1))).toBe(B(99));
+    expect(redeemShares(B(90), m.state)).toBe(B(99));
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
