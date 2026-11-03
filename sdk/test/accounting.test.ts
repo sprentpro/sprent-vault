@@ -184,6 +184,19 @@ describe("V9-V15 independent", () => {
     expect(G2.hwmPpsE12).toBe(pps(1.3));
     expect(crystallise(G2, back.state, ppsOf(back.state)).feeAtoms).toBe(B(0));
   });
+
+  it("V12 a direct transfer into the vault is surplus, not NAV: pps unchanged", () => {
+    const shares = usd(100_000);
+    const before = computeNav({ trackedQuoteAtoms: usd(100_000), trackedBaseAtoms: B(0), actualQuoteAtoms: usd(100_000), actualBaseAtoms: B(0), markPriceE12: B(0) });
+    const after = computeNav({ trackedQuoteAtoms: usd(100_000), trackedBaseAtoms: B(0), actualQuoteAtoms: usd(1_100_000), actualBaseAtoms: B(0), markPriceE12: B(0) });
+    expect(after.navQuoteAtoms).toBe(before.navQuoteAtoms);
+    expect(after.surplusQuoteAtoms).toBe(usd(1_000_000));
+    expect(after.reconciled).toBe(true);
+    expect(ppsOf({ totalAssets: after.navQuoteAtoms, totalShares: shares })).toBe(ppsOf({ totalAssets: before.navQuoteAtoms, totalShares: shares }));
+    const short = computeNav({ trackedQuoteAtoms: usd(100_000), trackedBaseAtoms: B(0), actualQuoteAtoms: usd(99_999), actualBaseAtoms: B(0), markPriceE12: B(0) });
+    expect(short.reconciled).toBe(false);
+    expect(short.shortfallQuoteAtoms).toBe(usd(1));
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
