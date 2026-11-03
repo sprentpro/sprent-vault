@@ -108,6 +108,22 @@ describe("V1-V8 one vault, in sequence", () => {
     A = ca.position;
     Bp = cb.position;
   });
+
+  it("V6 new profit above hwm: each position pays only on its own gain above 1.10", () => {
+    s = { ...s, totalAssets: s.totalAssets + usd(16_890.9) };
+    const epoch = ppsOf(s);
+    expect(Number(epoch) / 1e12).toBeCloseTo(1.2, 6);
+    beforeV6Crank = { s, B: Bp, epochPps: epoch };
+    const ca = crystallise(A, s, epoch);
+    near(ca.feeAtoms, 1_189.09);
+    const cb = crystallise(Bp, ca.state, epoch);
+    near(cb.feeAtoms, 500);
+    feeBInCrank = cb.feeAtoms;
+    ppsHeld(epoch, ppsOf(cb.state), cb.state.totalShares);
+    A = ca.position;
+    Bp = cb.position;
+    s = cb.state;
+  });
 });
 
 describe("V9-V15 independent", () => {
