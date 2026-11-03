@@ -218,6 +218,15 @@ describe("V9-V15 independent", () => {
     expect(redeemValue(B(90), pps(1.1))).toBe(B(99));
     expect(redeemShares(B(90), m.state)).toBe(B(99));
   });
+
+  it("V15 fee 1234.5 atoms rounds up to 1235, fee shares round up", () => {
+    const pos: Position = { shares: B(12_345_000), hwmPpsE12: pps(1) };
+    const s: VaultState = { totalAssets: B(100_000_000), totalShares: B(90_000_000) };
+    const epoch = pps(1.001);
+    const c = crystallise(pos, s, epoch);
+    expect(c.feeAtoms).toBe(B(1235));
+    expect(c.feeShares).toBe(B(1234));
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
