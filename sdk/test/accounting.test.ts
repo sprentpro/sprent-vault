@@ -145,6 +145,22 @@ describe("V1-V8 one vault, in sequence", () => {
 });
 
 describe("V9-V15 independent", () => {
+  it("V9 entrant after a loss pays on its recovery; earlier holder does not (control: single HWM lets it ride free)", () => {
+    let s: VaultState = { totalAssets: usd(80_000), totalShares: usd(100_000) };
+    const E: Position = { shares: usd(100_000), hwmPpsE12: pps(1) };
+    expect(ppsOf(s)).toBe(pps(0.8));
+    const m = mintShares(usd(40_000), s);
+    expect(m.sharesMinted).toBe(usd(50_000));
+    const D: Position = { shares: m.sharesMinted, hwmPpsE12: ppsOf(s) };
+    s = { ...m.state, totalAssets: usd(150_000) };
+    const epoch = ppsOf(s);
+    expect(epoch).toBe(pps(1));
+    const cd = crystallise(D, s, epoch);
+    expect(cd.feeAtoms).toBe(usd(1_000));
+    const ce = crystallise(E, cd.state, epoch);
+    expect(ce.feeAtoms).toBe(B(0));
+    expect(singleHwmFee(D.shares, epoch, pps(1))).toBe(B(0));
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
