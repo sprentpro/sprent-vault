@@ -170,6 +170,20 @@ describe("V9-V15 independent", () => {
     expect(crystallise(F, s, epoch).feeAtoms).toBe(B(0));
     expect(singleHwmFee(F.shares, epoch, pps(1.1)) > B(0)).toBe(true);
   });
+
+  it("V11 withdraw and redeposit cannot dodge the fee", () => {
+    const s: VaultState = { totalAssets: usd(130_000), totalShares: usd(100_000) };
+    const G: Position = { shares: usd(100_000), hwmPpsE12: pps(1) };
+    const epoch = ppsOf(s);
+    const out = withdraw(G, s, epoch, "all");
+    expect(out.crystallised.feeAtoms).toBe(usd(3_000));
+    const stay = crystallise(G, s, epoch);
+    expect(stay.feeAtoms).toBe(out.crystallised.feeAtoms);
+    const back = mintShares(out.redeemAtoms, out.state);
+    const G2: Position = { shares: back.sharesMinted, hwmPpsE12: epoch };
+    expect(G2.hwmPpsE12).toBe(pps(1.3));
+    expect(crystallise(G2, back.state, ppsOf(back.state)).feeAtoms).toBe(B(0));
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
