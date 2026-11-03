@@ -124,6 +124,16 @@ describe("V1-V8 one vault, in sequence", () => {
     Bp = cb.position;
     s = cb.state;
   });
+
+  it("V7 full withdrawal after crystallisation: no extra fee", () => {
+    const epoch = ppsOf(s);
+    const w = withdraw(A, s, epoch, "all");
+    expect(w.crystallised.feeAtoms).toBe(B(0));
+    expect(w.redeemAtoms).toBe(redeemShares(A.shares, s));
+    expect(w.redeemAtoms <= redeemValue(A.shares, epoch) + B(1)).toBe(true);
+    expect(w.position.shares).toBe(B(0));
+    near(w.redeemAtoms, 118_909 * 1.2 - 1_189.09, B(2) * U);
+  });
 });
 
 describe("V9-V15 independent", () => {
