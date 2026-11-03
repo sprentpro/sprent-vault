@@ -197,6 +197,17 @@ describe("V9-V15 independent", () => {
     expect(short.reconciled).toBe(false);
     expect(short.shortfallQuoteAtoms).toBe(usd(1));
   });
+
+  it("V13 a deposit that buys zero shares is refused", () => {
+    const s: VaultState = { totalAssets: B("1000000000000000"), totalShares: B(1) };
+    expect(() => mintShares(B(1), s)).toThrow(AccountingError);
+    try {
+      mintShares(B(1), s);
+    } catch (e) {
+      expect((e as AccountingError).code).toBe("ZERO_SHARES");
+    }
+    expect(() => sharesAtPps(B(1), B("1000000000000000000000000"))).toThrow(AccountingError);
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
