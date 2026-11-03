@@ -96,6 +96,18 @@ describe("V1-V8 one vault, in sequence", () => {
     expect(ca.position.hwmPpsE12).toBe(A.hwmPpsE12);
     expect(cb.position.hwmPpsE12).toBe(Bp.hwmPpsE12);
   });
+
+  it("V5 recovery epoch: no fee on recovered loss", () => {
+    s = { ...s, totalAssets: s.totalAssets + usd(18_580) };
+    const epoch = ppsOf(s);
+    expect(Number(epoch) / 1e12).toBeCloseTo(1.1, 9);
+    const ca = crystallise(A, s, epoch);
+    const cb = crystallise(Bp, s, epoch);
+    expect(ca.feeAtoms).toBe(B(0));
+    expect(cb.feeAtoms).toBe(B(0));
+    A = ca.position;
+    Bp = cb.position;
+  });
 });
 
 describe("V9-V15 independent", () => {
