@@ -134,6 +134,14 @@ describe("V1-V8 one vault, in sequence", () => {
     expect(w.position.shares).toBe(B(0));
     near(w.redeemAtoms, 118_909 * 1.2 - 1_189.09, B(2) * U);
   });
+
+  it("V8 withdrawal before the crank: forced crystallisation, same fee (no escape)", () => {
+    const { s: s0, B: b0, epochPps } = beforeV6Crank;
+    const w = withdraw(b0, s0, epochPps, "all");
+    expect(w.crystallised.feeAtoms).toBe(feeBInCrank);
+    near(w.crystallised.feeAtoms, 500);
+    expect(w.redeemAtoms).toBe(redeemShares(w.crystallised.position.shares, w.crystallised.state));
+  });
 });
 
 describe("V9-V15 independent", () => {
