@@ -84,6 +84,18 @@ describe("V1-V8 one vault, in sequence", () => {
     near(s.totalAssets, 185_800);
     ppsHeld(before, ppsOf(s), s.totalShares);
   });
+
+  it("V4 loss epoch: no fee, hwm unchanged", () => {
+    s = { ...s, totalAssets: s.totalAssets - usd(18_580) };
+    const epoch = ppsOf(s);
+    expect(Number(epoch) / 1e12).toBeCloseTo(0.99, 5);
+    const ca = crystallise(A, s, epoch);
+    const cb = crystallise(Bp, s, epoch);
+    expect(ca.feeAtoms).toBe(B(0));
+    expect(cb.feeAtoms).toBe(B(0));
+    expect(ca.position.hwmPpsE12).toBe(A.hwmPpsE12);
+    expect(cb.position.hwmPpsE12).toBe(Bp.hwmPpsE12);
+  });
 });
 
 describe("V9-V15 independent", () => {
