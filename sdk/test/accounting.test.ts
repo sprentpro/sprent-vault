@@ -236,5 +236,11 @@ describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () =
     expect([a.holderAtoms, a.buybackAtoms, a.teamAtoms]).toEqual([usd(210), usd(70), usd(420)]);
     expect(a.holderAtoms + a.buybackAtoms + a.teamAtoms).toBe(a.netDistributableAtoms);
   });
+
+  it("S <= 0 allocates nothing and records the shortfall for the team book", () => {
+    const a = allocateService({ grossFeeAtoms: usd(100), externalCostAtoms: usd(220), rebateAtoms: B(0), opexReserveAtoms: B(0) });
+    expect([a.netDistributableAtoms, a.holderAtoms, a.buybackAtoms, a.teamAtoms]).toEqual([B(0), B(0), B(0), B(0)]);
+    expect(a.shortfallAtoms).toBe(usd(120));
+  });
 });
 
