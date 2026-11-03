@@ -230,5 +230,11 @@ describe("V9-V15 independent", () => {
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
+  it("net S 700 -> holders 210 / buyback 70 / team 420", () => {
+    const a = allocateService({ grossFeeAtoms: usd(1_000), externalCostAtoms: usd(300), rebateAtoms: B(0), opexReserveAtoms: B(0) });
+    expect(a.netDistributableAtoms).toBe(usd(700));
+    expect([a.holderAtoms, a.buybackAtoms, a.teamAtoms]).toEqual([usd(210), usd(70), usd(420)]);
+    expect(a.holderAtoms + a.buybackAtoms + a.teamAtoms).toBe(a.netDistributableAtoms);
+  });
 });
 
