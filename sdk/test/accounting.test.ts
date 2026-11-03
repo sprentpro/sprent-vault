@@ -161,6 +161,15 @@ describe("V9-V15 independent", () => {
     expect(ce.feeAtoms).toBe(B(0));
     expect(singleHwmFee(D.shares, epoch, pps(1))).toBe(B(0));
   });
+
+  it("V10 entry at the high then flat: no fee (control: a stale vault HWM double-charges)", () => {
+    const s: VaultState = { totalAssets: usd(120_000), totalShares: usd(100_000) };
+    const F: Position = { shares: usd(10_000), hwmPpsE12: pps(1.2) };
+    const epoch = ppsOf(s);
+    expect(epoch).toBe(pps(1.2));
+    expect(crystallise(F, s, epoch).feeAtoms).toBe(B(0));
+    expect(singleHwmFee(F.shares, epoch, pps(1.1)) > B(0)).toBe(true);
+  });
 });
 
 describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () => {
