@@ -41,4 +41,9 @@ describe("assertFundFlow", () => {
     const customerPurposes = Object.entries(FLOW_RULES).filter(([, r]) => r.from.includes("CUSTOMER")).map(([p]) => p).sort();
     expect(customerPurposes).toEqual(["DEPOSIT", "PERF_FEE", "WITHDRAWAL"]);
   });
+
+  it("buyback sources map to S and C only", () => {
+    expect(buybackFundClass("CREATOR_FEE")).toBe("CREATOR_FEE");
+    expect(buybackFundClass("SERVICE_FEE")).toBe("SERVICE");
+  });
 });
