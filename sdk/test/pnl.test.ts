@@ -28,4 +28,17 @@ describe("decomposePnl", () => {
     { at: at(60), midE12: mid(149.5) },
     { at: at(300), midE12: mid(149) },
   ];
+
+  it("splits a losing desk: +0.10 spread, -0.50 adverse at 60 s, 0.05 costs -> net -0.45", () => {
+    const fills: PnlFill[] = [{ at: at(0), deskBought: true, baseAtoms: SOL, quoteAtoms: B(149_900_000) }];
+    const b = decomposePnl(fills, marks, B(50_000));
+    expect(b.spreadCaptureAtoms).toBe(B(100_000));
+    expect(b.adverseSelectionAtoms).toBe(B(-500_000));
+    expect(b.netAtoms).toBe(B(-450_000));
+    expect(b.horizons.map((h) => [h.seconds, h.fills, h.markoutAtoms])).toEqual([
+      [5, 1, B(300_000)],
+      [60, 1, B(-400_000)],
+      [300, 1, B(-900_000)],
+    ]);
+  });
 });
