@@ -247,5 +247,10 @@ describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () =
     const a = allocateService({ grossFeeAtoms: B(1_000_007), externalCostAtoms: B(0), rebateAtoms: B(0), opexReserveAtoms: B(0) });
     expect(a.holderAtoms + a.buybackAtoms + a.teamAtoms).toBe(B(1_000_007));
   });
+
+  it("creator fee 1000 - 20 cost -> buyback 196 / team 784", () => {
+    expect(allocateCreatorFee(usd(1_000), usd(20))).toEqual({ netAtoms: usd(980), buybackAtoms: usd(196), teamAtoms: usd(784) });
+    expect(() => allocateCreatorFee(usd(1), B(0), B(5001))).toThrow(AccountingError);
+  });
 });
 
