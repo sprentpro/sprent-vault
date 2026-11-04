@@ -252,5 +252,11 @@ describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () =
     expect(allocateCreatorFee(usd(1_000), usd(20))).toEqual({ netAtoms: usd(980), buybackAtoms: usd(196), teamAtoms: usd(784) });
     expect(() => allocateCreatorFee(usd(1), B(0), B(5001))).toThrow(AccountingError);
   });
+
+  it("time-weighted rewards never exceed the pool; remainder carries", () => {
+    const r = splitRewards(B(100), [B(1), B(1), B(1)]);
+    expect(r.rewards).toEqual([B(33), B(33), B(33)]);
+    expect(r.carryAtoms).toBe(B(1));
+  });
 });
 
