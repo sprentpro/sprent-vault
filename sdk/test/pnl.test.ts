@@ -48,4 +48,13 @@ describe("decomposePnl", () => {
     expect(b.spreadCaptureAtoms).toBe(B(100_000));
     expect(b.adverseSelectionAtoms).toBe(B(500_000));
   });
+
+  it("fills with no mark close enough are unmarked, not filled in", () => {
+    const fills: PnlFill[] = [
+      { at: at(0), deskBought: true, baseAtoms: SOL, quoteAtoms: B(149_900_000) },
+      { at: at(5000), deskBought: true, baseAtoms: SOL, quoteAtoms: B(1) },
+    ];
+    const b = decomposePnl(fills, marks, B(0));
+    expect([b.fills, b.marked, b.unmarked, b.headlineFills]).toEqual([2, 1, 1, 1]);
+  });
 });
