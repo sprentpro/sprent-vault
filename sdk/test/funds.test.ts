@@ -36,4 +36,9 @@ describe("assertFundFlow", () => {
     expect(() => assertFundFlow({ ...f("SERVICE", "BUYBACK"), amountAtoms: BigInt(0) })).toThrow(FundClassViolation);
     expect(() => assertFundFlow({ ...f("SERVICE", "BUYBACK"), amountAtoms: BigInt(-1) })).toThrow(FundClassViolation);
   });
+
+  it("no purpose lists CUSTOMER as a source except deposit/withdrawal/perf fee", () => {
+    const customerPurposes = Object.entries(FLOW_RULES).filter(([, r]) => r.from.includes("CUSTOMER")).map(([p]) => p).sort();
+    expect(customerPurposes).toEqual(["DEPOSIT", "PERF_FEE", "WITHDRAWAL"]);
+  });
 });
