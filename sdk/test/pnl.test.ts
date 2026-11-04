@@ -41,4 +41,11 @@ describe("decomposePnl", () => {
       [300, 1, B(-900_000)],
     ]);
   });
+
+  it("the mirror winning desk gives the same numbers with the opposite sign", () => {
+    const fills: PnlFill[] = [{ at: at(0), deskBought: false, baseAtoms: SOL, quoteAtoms: B(150_100_000) }];
+    const b = decomposePnl(fills, marks, B(0));
+    expect(b.spreadCaptureAtoms).toBe(B(100_000));
+    expect(b.adverseSelectionAtoms).toBe(B(500_000));
+  });
 });
