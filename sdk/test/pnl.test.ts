@@ -57,4 +57,9 @@ describe("decomposePnl", () => {
     const b = decomposePnl(fills, marks, B(0));
     expect([b.fills, b.marked, b.unmarked, b.headlineFills]).toEqual([2, 1, 1, 1]);
   });
+
+  it("the mid at fill time is the last mark before the fill, never a later one", () => {
+    expect(markAtOrBefore(marks, t0, 30)?.midE12).toBe(mid(150));
+    expect(markAtOrBefore(marks, t0 - 60_000, 30)).toBeNull();
+  });
 });
