@@ -62,4 +62,8 @@ describe("decomposePnl", () => {
     expect(markAtOrBefore(marks, t0, 30)?.midE12).toBe(mid(150));
     expect(markAtOrBefore(marks, t0 - 60_000, 30)).toBeNull();
   });
+
+  it("SOL-paid costs convert at the mid", () => {
+    expect(lamportsToQuote(B(5_000), mid(91.2))).toBe(B(456));
+  });
 });
