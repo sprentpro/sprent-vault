@@ -12,6 +12,13 @@ describe("single fill parts", () => {
   it("spread capture: bought 10 cents under a 150.00 mid = +0.10 USDC", () => {
     expect(spreadCapture(bought, mid(150))).toBe(B(100_000));
   });
+  it("adverse selection: mid falls to 149.50 after the buy = -0.50 USDC; mirror sale = same size", () => {
+    expect(adverseSelection(bought, mid(150), mid(149.5))).toBe(B(-500_000));
+    const sold: PnlFill = { at: at(0), deskBought: false, baseAtoms: SOL, quoteAtoms: B(150_100_000) };
+    expect(spreadCapture(sold, mid(150))).toBe(B(100_000));
+    expect(adverseSelection(sold, mid(150), mid(150.5))).toBe(B(-500_000));
+    expect(adverseSelection(sold, mid(150), mid(149.5))).toBe(B(500_000));
+  });
 });
 
 describe("decomposePnl", () => {
