@@ -242,5 +242,10 @@ describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () =
     expect([a.netDistributableAtoms, a.holderAtoms, a.buybackAtoms, a.teamAtoms]).toEqual([B(0), B(0), B(0), B(0)]);
     expect(a.shortfallAtoms).toBe(usd(120));
   });
+
+  it("odd amounts: floors to holders and buyback, remainder to team, sum exact", () => {
+    const a = allocateService({ grossFeeAtoms: B(1_000_007), externalCostAtoms: B(0), rebateAtoms: B(0), opexReserveAtoms: B(0) });
+    expect(a.holderAtoms + a.buybackAtoms + a.teamAtoms).toBe(B(1_000_007));
+  });
 });
 
