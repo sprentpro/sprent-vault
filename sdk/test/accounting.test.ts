@@ -260,3 +260,16 @@ describe("service / creator / staker allocation (ECONOMICS rev2 examples)", () =
   });
 });
 
+describe("canonical ratio form (2026-11-04)", () => {
+  it("mint = floor(amount x total_shares / nav) is never above the pps form; redeem = floor(shares x nav / total_shares)", () => {
+    const s: VaultState = { totalAssets: B(1), totalShares: B(3) };
+    const ratio = mintShares(B("3000000000000"), s).sharesMinted;
+    const ppsForm = sharesAtPps(B("3000000000000"), ppsOf(s));
+    expect(ratio).toBe(B("9000000000000"));
+    expect(ppsForm).toBe(B("9000000000009"));
+    const s2: VaultState = { totalAssets: B(10), totalShares: B(3) };
+    expect(redeemShares(B(1), s2)).toBe(B(3));
+    expect(redeemShares(B(3), s2)).toBe(B(10));
+  });
+});
+
