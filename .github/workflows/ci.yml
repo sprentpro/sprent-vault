@@ -1,0 +1,77 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  program:
+    name: program build, lint and test
+    runs-on: ubuntu-24.04
+    env:
+      SOLANA_VERSION: 3.0.0
+      ANCHOR_VERSION: 0.31.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup show active-toolchain
+          rustup component add rustfmt
+      - name: Install system packages
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev pkg-config
+      - name: Install Solana CLI
+        run: |
+          curl -sSfL "https://github.com/anza-xyz/agave/releases/download/v${SOLANA_VERSION}/solana-release-x86_64-unknown-linux-gnu.tar.bz2" | tar -xj -C "$HOME"
+          echo "$HOME/solana-release/bin" >> "$GITHUB_PATH"
+      - name: Install Anchor CLI
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -sSfL -o "$HOME/.local/bin/anchor" "https://github.com/solana-foundation/anchor/releases/download/v${ANCHOR_VERSION}/anchor-${ANCHOR_VERSION}-x86_64-unknown-linux-gnu"
+          chmod +x "$HOME/.local/bin/anchor"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Lint
+        run: cargo fmt --all -- --check
+      - name: Build
+        run: bash scripts/build.sh
+      - name: Check IDL
+        run: |
+          python3 - target/idl/sprent_vault.json idl/sprent_vault.json <<'PY'
+          import hashlib, json, sys
+          def strip(x):
+              if isinstance(x, dict):
+                  return {k: strip(v) for k, v in x.items() if k != "docs"}
+              if isinstance(x, list):
+                  return [strip(v) for v in x]
+              return x
+          h = [hashlib.sha256(json.dumps(strip(json.load(open(f))), sort_keys=True, separators=(",", ":")).encode()).hexdigest() for f in sys.argv[1:]]
+          print(h)
+          sys.exit(0 if h[0] == h[1] else 1)
+          PY
+      - name: Test
+        run: cargo test -p sprent_vault
+
+  sdk:
+    name: sdk build, lint and test
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sdk/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test
