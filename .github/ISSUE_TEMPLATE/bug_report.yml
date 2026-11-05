@@ -1,0 +1,46 @@
+name: Bug report
+description: Report incorrect behaviour in the program or the accounting package
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Security issues must be reported privately as described in SECURITY.md, not here.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - sprent_vault program
+        - sdk (vault-accounting)
+        - build or CI
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The instruction or function involved, the input, and the result you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Commands or a failing test.
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Output of rustc --version, solana --version, anchor --version and node --version.
