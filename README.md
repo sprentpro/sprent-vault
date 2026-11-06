@@ -45,3 +45,112 @@ This repository contains the on-chain program `sprent_vault` (Anchor) and `@spre
 5. **Withdraw.** `request_withdraw` queues shares behind the cooldown; after settlement `claim_withdraw` pays USDC to a token account owned by the depositor.
 6. **Platform.** Net service income is split by `distribute_service` into a holder reward pool for staked $SPRENT, a buyback budget and a team budget. Staking uses a warmup, time-weighted reward windows and an unstake cooldown. Buybacks are tracked as intents on a `BuybackLedger` (opened, recorded with the buy signature, burned), with customer vault accounts rejected as a funding source.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Users
+        D[Depositor wallet]
+        S[Staker wallet]
+    end
+    subgraph Keys
+        OP[Operator key]
+        AD[Admin key]
+        GU[Guardian key]
+    end
+    subgraph Program[sprent_vault]
+        CFG[VaultConfig per desk]
+        DEP[Depositor ledger]
+        EP[EpochNav records]
+        PL[Platform and StakePool]
+        BB[BuybackLedger]
+        VA[Vault authority PDA]
+    end
+    subgraph Venue[Manifest]
+        MK[SOL/USDC market]
+    end
+    OR[Pyth SOL/USD]
+    D -->|deposit / request_withdraw / claim_withdraw| DEP
+    OP -->|quote_batch / cancel_all| CFG
+    AD -->|set_params / set_roles| CFG
+    AD -->|distribute_service| PL
+    GU -->|set_state HALTED / emergency_cancel| CFG
+    S -->|stake / claim_reward| PL
+    CFG --> VA
+    VA -->|invoke_signed CPI| MK
+    OR -->|close_epoch| EP
+    EP --> DEP
+    PL --> BB
+```
+
+```mermaid
+sequenceDiagram
+    participant U as Depositor
+    participant V as sprent_vault
+    participant O as Operator
+    participant M as Manifest
+    participant P as Pyth
+    U->>V: deposit(amount)
+    O->>V: fund_venue(base, quote)
+    V->>M: Deposit (signed by vault PDA)
+    O->>V: quote_batch(cancels, orders)
+    V->>V: PostOnly, oracle band, inventory and loss checks
+    V->>M: BatchUpdate (signed by vault PDA)
+    O->>V: cancel_all, defund_venue
+    V->>M: Withdraw to vault token accounts
+    O->>V: close_epoch
+    V->>P: read SOL/USD price
+    V->>V: NAV from vault balances, write EpochNav
+    U->>V: settle_position
+    U->>V: request_withdraw(shares)
+    U->>V: claim_withdraw
+    V-->>U: USDC to the depositor's token account
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> RUNNING: initialize
+    RUNNING --> HALTED: guardian or admin set_state
+    RUNNING --> HALTED: epoch loss limit hit in quote_batch
+    RUNNING --> HALTED: emergency_cancel
+    RUNNING --> RECONCILE_FROZEN: close_epoch check fails
+    HALTED --> RUNNING: admin set_state
+    RECONCILE_FROZEN --> RUNNING: admin set_state after reconciliation
+    HALTED --> HALTED: reduce-only quoting, withdrawals continue
+```
+
+```mermaid
+flowchart TD
+    P[Customer book P: vault principal and shares] -->|HWM performance fee via sweep_fees| SV[Service treasury S]
+    SV -->|distribute_service| C{declared costs, then split by bps}
+    C -->|holder_bps| RW[Holder reward vault]
+    C -->|buyback_bps| BBT[Buyback budget]
+    C -->|remainder and declared costs| TT[Team treasury T]
+    RW -->|claim_reward| ST[$SPRENT stakers]
+    BBT -->|take_service_buyback| EX[Buyback executor]
+    EX -->|record_buyback| BV[Burn vault]
+    BV -->|burn_bought| BURN[Token supply reduced]
+    TT -->|withdraw_team| TEAM[Team wallet]
+    P -->|claim_withdraw| OWN[Depositor wallet]
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> Warming: stake
+    Warming --> Active: activate_stake after warmup
+    Active --> Active: claim_reward per closed window
+    Active --> Cooling: request_unstake
+    Cooling --> [*]: withdraw_unstaked after cooldown
+```
+
+Program accounts:
+
+| Account | Seeds | Holds |
+|---|---|---|
+| `VaultConfig` | `config`, desk id | roles, mints, venue and oracle addresses, risk parameters, epoch counters, state |
+| `Depositor` | `depositor`, config, owner | shares, queued deposit, withdrawal request, per-depositor high-water mark, claimable USDC |
+| `EpochNav` | `epoch`, config, epoch | settled NAV, share count, price per share, oracle reading, status |
+| `Platform` | `platform` | treasuries, split ratios, allocation totals, exclusion list |
+| `StakePool` / `StakeAccount` / `RewardWindow` | `stake_pool`, `stake`, `reward_window` | stake positions and time-weighted reward windows |
+| `BuybackLedger` | `buyback`, intent id | buyback intent, spent and bought amounts, pending and burned tokens |
+
