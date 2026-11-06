@@ -36,3 +36,12 @@ This repository contains the on-chain program `sprent_vault` (Anchor) and `@spre
 - Venue: Manifest `MNFSTqtC93rEfYHB6hF82sKdZpUDFWkViLByLd1k1Ms` ([Solscan](https://solscan.io/account/MNFSTqtC93rEfYHB6hF82sKdZpUDFWkViLByLd1k1Ms?cluster=mainnet-beta))
 - Tests: 64 passing (16 Rust unit tests, 48 TypeScript tests), recorded in [VERIFY.md](VERIFY.md)
 
+## How it works
+
+1. **Deposit.** `deposit` moves USDC from the depositor into the desk's vault token account and queues it. Shares are minted at the next epoch's settled price after the entry delay, so a deposit never buys into a price it has already seen.
+2. **Quote.** The operator calls `fund_venue` to move working capital into the vault's Manifest seat and `quote_batch` to cancel and place orders. The program signs the Manifest CPI with the vault PDA, rejects any order type other than PostOnly, rejects prices outside the oracle band, and enforces inventory, bid size and orders-per-batch limits. A loss beyond the epoch loss limit halts the desk; a halted desk can only reduce inventory.
+3. **Close the epoch.** `cancel_all` and `defund_venue` bring every order and balance back to the vault. `close_epoch` then requires zero open orders, reads the vault's actual token balances and the Pyth SOL/USD price (staleness, confidence and book-deviation checks) and writes an `EpochNav` record. If a check fails the epoch is frozen for reconciliation instead of being priced.
+4. **Settle.** `settle_position` brings one depositor up to the closed epoch: mints queued deposits, crystallises the performance fee above that depositor's own high-water mark and turns matured withdrawal requests into claimable USDC. `sweep_fees` moves crystallised fees to the service treasury.
+5. **Withdraw.** `request_withdraw` queues shares behind the cooldown; after settlement `claim_withdraw` pays USDC to a token account owned by the depositor.
+6. **Platform.** Net service income is split by `distribute_service` into a holder reward pool for staked $SPRENT, a buyback budget and a team budget. Staking uses a warmup, time-weighted reward windows and an unstake cooldown. Buybacks are tracked as intents on a `BuybackLedger` (opened, recorded with the buy signature, burned), with customer vault accounts rejected as a funding source.
+
