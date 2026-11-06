@@ -209,3 +209,31 @@ Program accounts:
 - `accounting.rs` holds the share, NAV and performance-fee math; `sdk/src/accounting.ts` is an independent TypeScript implementation of the same rules with integer arithmetic.
 - `idl/sprent_vault.json` is the Anchor IDL produced by this source.
 
+## Quick start
+
+Requirements: Rust 1.95.0 (pinned in `rust-toolchain.toml`), Solana CLI 3.0.0, Anchor CLI 0.31.1, Node.js 22 or newer.
+
+```bash
+git clone https://github.com/sprentpro/sprent-vault.git
+cd sprent-vault
+bash scripts/build.sh
+cargo test -p sprent_vault
+cargo fmt --all -- --check
+
+cd sdk
+npm ci
+npm run lint
+npm run build
+npm test
+```
+
+`bash scripts/build.sh` writes the program to `target/deploy/sprent_vault.so` and the IDL to `target/idl/sprent_vault.json`. [VERIFY.md](VERIFY.md) lists the measured results and how to compare the IDL with `idl/sprent_vault.json`.
+
+The build script pins SBF platform-tools v1.52 and generates the IDL separately.
+
+The accounting package is private to this workspace and is not published on npm. Build it from `sdk/` before consuming it in a local workspace. Its public exports include:
+
+```ts
+import { computeNav, mintShares, redeemValue } from "@sprent/vault-accounting";
+```
+
