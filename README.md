@@ -154,3 +154,58 @@ Program accounts:
 | `StakePool` / `StakeAccount` / `RewardWindow` | `stake_pool`, `stake`, `reward_window` | stake positions and time-weighted reward windows |
 | `BuybackLedger` | `buyback`, intent id | buyback intent, spent and bought amounts, pending and burned tokens |
 
+## Repository structure
+
+```text
+.
+├── Anchor.toml
+├── Cargo.toml
+├── Cargo.lock
+├── rust-toolchain.toml
+├── idl/
+│   └── sprent_vault.json
+├── programs/sprent_vault/
+│   ├── Cargo.toml
+│   └── src/
+│       ├── lib.rs
+│       ├── constants.rs
+│       ├── errors.rs
+│       ├── events.rs
+│       ├── helpers.rs
+│       ├── accounting.rs
+│       ├── manifest.rs
+│       ├── oracle.rs
+│       ├── state/
+│       │   ├── vault.rs
+│       │   └── platform.rs
+│       └── instructions/
+│           ├── setup.rs
+│           ├── deposit.rs
+│           ├── venue.rs
+│           ├── orders.rs
+│           ├── epoch.rs
+│           ├── withdraw.rs
+│           ├── fees.rs
+│           ├── admin.rs
+│           ├── platform_setup.rs
+│           ├── service.rs
+│           ├── staking.rs
+│           ├── exclusion.rs
+│           └── buyback.rs
+├── sdk/
+│   ├── package.json
+│   ├── src/
+│   │   ├── accounting.ts
+│   │   ├── pnl.ts
+│   │   ├── funds.ts
+│   │   └── index.ts
+│   └── test/
+├── assets/
+└── VERIFY.md
+```
+
+- `lib.rs` declares the program ID and the `#[program]` entry points; each entry point calls its handler in `instructions/`.
+- `manifest.rs` builds Manifest instructions from their wire format. The program does not link the Manifest crate.
+- `accounting.rs` holds the share, NAV and performance-fee math; `sdk/src/accounting.ts` is an independent TypeScript implementation of the same rules with integer arithmetic.
+- `idl/sprent_vault.json` is the Anchor IDL produced by this source.
+
