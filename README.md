@@ -237,3 +237,27 @@ The accounting package is private to this workspace and is not published on npm.
 import { computeNav, mintShares, redeemValue } from "@sprent/vault-accounting";
 ```
 
+## Security
+
+Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md). Do not open a public issue for a security report.
+
+Design properties enforced in the program:
+
+- The vault PDA is the Manifest trader; the operator key signs only `quote_batch`, `cancel_all`, venue funding and epoch maintenance.
+- Orders must be PostOnly and inside the oracle price band; inventory, bid size and batch size are capped by `VaultConfig` risk parameters.
+- Desk PDAs (vault authority, `Depositor`, `EpochNav`) are seeded with their `VaultConfig`, and stored addresses are checked on every instruction (`AccountSubstitution`).
+- NAV is computed only from flattened vault balances and a checked oracle price; a failed check freezes the epoch for reconciliation.
+- Customer vault accounts are rejected as a source for the service treasury, the buyback budget and the team budget.
+
+### Trust assumptions
+
+The program limits what each key can do, but it does not remove trust in the team. Before depositing, assume the following:
+
+- **Upgrade authority.** The program is upgradeable. `initialize` requires the desk admin to be the program's upgrade authority, so one key can both administer the desk and replace the program code. An upgrade can change any rule in this repository. Check the current upgrade authority on [Solscan](https://solscan.io/account/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g).
+- **Admin parameters take effect immediately.** `set_params` has no timelock. Within the bounds in `validate_params`, the admin can raise the performance fee up to 50% (applied at the next settlement), lengthen the withdrawal cooldown and epoch duration (no upper bound), and change deposit caps and risk limits. The admin key itself, the Manifest market, the mints, the oracle account, the Pyth feed id and the oracle mode (Pyth, or a fixed 1:1 peg meant for stablecoin pairs) are fixed at `initialize` and have no setter.
+- **Freezing.** The admin can set any desk state, including `RECONCILE_FROZEN`, which blocks `close_epoch`. While frozen no new epoch is priced, so queued deposits are not minted and pending withdrawal requests do not mature. USDC already settled as claimable can still be claimed with `claim_withdraw`.
+- **Liveness.** `close_epoch` must be signed by the operator, admin or guardian. `settle_position` and `claim_withdraw` need no team signature, but they depend on epochs being closed.
+- **Operator trading.** The operator chooses prices inside the oracle band (up to 20% wide, set by the admin) and sizes inside the inventory and loss limits. Losses inside those limits, including fills against a counterparty the operator controls, are borne by the vault.
+- **Service income.** `distribute_service` takes a `declared_costs` amount from the admin; declared costs go to the team treasury before the holder and buyback split.
+- **Audit.** The program has not had an external security audit.
+
