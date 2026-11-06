@@ -261,3 +261,6 @@ The program limits what each key can do, but it does not remove trust in the tea
 - **Service income.** `distribute_service` takes a `declared_costs` amount from the admin; declared costs go to the team treasury before the holder and buyback split.
 - **Audit.** The program has not had an external security audit.
 
+## License
+
+Licensed under the [MIT License](LICENSE).
