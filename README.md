@@ -36,19 +36,19 @@ The operator key can place and cancel quotes inside on-chain risk limits. It can
 
 This repository contains the on-chain program `sprent_vault` (Anchor) and `@sprent/vault-accounting`, a dependency-free TypeScript reference of the vault ledger used by the off-chain indexer.
 
-- Program ID: `GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g` ([devnet explorer](https://explorer.solana.com/address/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g?cluster=devnet)). Mainnet deployment is pending.
+- Program ID: `GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g` ([Solscan, mainnet](https://solscan.io/account/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g)).
 - Venue: Manifest `MNFSTqtC93rEfYHB6hF82sKdZpUDFWkViLByLd1k1Ms` ([Solscan](https://solscan.io/account/MNFSTqtC93rEfYHB6hF82sKdZpUDFWkViLByLd1k1Ms?cluster=mainnet-beta))
 - Tests: 64 passing (16 Rust unit tests, 48 TypeScript tests), recorded in [VERIFY.md](VERIFY.md)
 
 ## Deployment status
 
-**Devnet is deployed. Mainnet deployment is pending.** The current devnet site and workers use this program:
+**Mainnet is live.** The SPRENT site and workers use this program on Solana mainnet:
 
 `GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g`
 
-[Inspect the devnet program on Solana Explorer](https://explorer.solana.com/address/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g?cluster=devnet). The account is executable and uses Solana's upgradeable program loader.
+[Inspect the mainnet program on Solscan](https://solscan.io/account/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g). The account is executable and uses Solana's upgradeable program loader.
 
-The program ID in this source is the current devnet ID and the intended mainnet ID. Mainnet deployment and byte-for-byte verification have not been completed.
+The mainnet executable hash is `a109a97f96d949ce4cc80b6c9dd0c00ba776e77d192a119ce16d58eeda7fca03`. It matches the checked release artifact. See the [verification record](VERIFY.md#mainnet-check) for measured values, the scope of this check and instructions for rebuilding from public source.
 
 ## How it works
 
@@ -267,7 +267,7 @@ Design properties enforced in the program:
 
 The program limits what each key can do, but it does not remove trust in the team. Before depositing, assume the following:
 
-- **Upgrade authority.** The program is upgradeable. `initialize` requires the desk admin to be the program's upgrade authority, so one key can both administer the desk and replace the program code. An upgrade can change any rule in this repository. Check the current devnet upgrade authority on [Solana Explorer](https://explorer.solana.com/address/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g?cluster=devnet).
+- **Upgrade authority.** The program is upgradeable. `initialize` requires the desk admin to be the program's upgrade authority, so one key can both administer the desk and replace the program code. An upgrade can change any rule in this repository. Check the current mainnet upgrade authority on [Solscan](https://solscan.io/account/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g).
 - **Admin parameters take effect immediately.** `set_params` has no timelock. Within the bounds in `validate_params`, the admin can raise the performance fee up to 50% (applied at the next settlement), lengthen the withdrawal cooldown and epoch duration (no upper bound), and change deposit caps and risk limits. The admin key itself, the Manifest market, the mints, the oracle account, the Pyth feed id and the oracle mode (Pyth, or a fixed 1:1 peg meant for stablecoin pairs) are fixed at `initialize` and have no setter.
 - **Freezing.** The admin can set any desk state, including `RECONCILE_FROZEN`, which blocks `close_epoch`. While frozen no new epoch is priced, so queued deposits are not minted and pending withdrawal requests do not mature. USDC already settled as claimable can still be claimed with `claim_withdraw`.
 - **Liveness.** `close_epoch` must be signed by the operator, admin or guardian. `settle_position` and `claim_withdraw` need no team signature, but they depend on epochs being closed.

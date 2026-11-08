@@ -4,8 +4,29 @@
 
 Program ID: `GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g`.
 
-[Devnet program](https://explorer.solana.com/address/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g?cluster=devnet).
-The devnet account is executable. Mainnet deployment is pending. Neither an IDL comparison nor a passing test suite proves that an on-chain binary matches this repository.
+[Mainnet program on Solscan](https://solscan.io/account/GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g). The mainnet account is executable and uses Solana's upgradeable program loader.
+
+## Mainnet check
+
+Checked on 2026-11-08 against mainnet-beta at finalized slot `466816414`. The on-chain executable hash matches the release artifact available to the deployment operator:
+
+| Check | Result |
+|---|---|
+| Mainnet executable hash | `a109a97f96d949ce4cc80b6c9dd0c00ba776e77d192a119ce16d58eeda7fca03` |
+| Release artifact executable hash | `a109a97f96d949ce4cc80b6c9dd0c00ba776e77d192a119ce16d58eeda7fca03` |
+| Release file SHA-256 | `7a461deb0e7a075894a90450aae0af067cd05279e642145b2db69daff8dd4d47` |
+| Release file size | 1,113,024 bytes |
+| Hash tool | `solana-verify` 0.5.2 |
+
+This confirms the deployed executable matches that release artifact. A fresh rebuild from the public Git repository was not run as part of this check, so this record does not certify a source-to-binary match or an external security audit.
+
+Recheck the deployed program and a local release file:
+
+```bash
+solana-verify get-program-hash --url https://api.mainnet-beta.solana.com GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g
+solana-verify get-executable-hash target/deploy/sprent_vault.so
+sha256sum target/deploy/sprent_vault.so
+```
 
 ## Build and test locally
 
@@ -45,34 +66,35 @@ PY
 
 ## Reproducible release build
 
-The deployment operator must pin the exact Git commit and Docker build image digest before building the mainnet artifact. Preserve the `.so` SHA-256, tool versions and deployment transaction outside the repository. Do not edit or reformat `programs/` after producing that artifact.
+Reproducing the release requires the exact Git source revision and pinned Docker build image digest. Preserve the `.so` SHA-256, tool versions and deployment transaction outside the repository. Do not edit or reformat `programs/` after producing that artifact.
 
-With Docker running and `BUILD_IMAGE` set to the agreed verification image **including its sha256 digest**:
+With Docker running:
 
 ```bash
-: "${BUILD_IMAGE:?Set the pinned release build image digest}"
-solana-verify build --base-image "$BUILD_IMAGE" --library-name sprent_vault
+BUILD_IMAGE=solanafoundation/solana-verifiable-build@sha256:2fc14309065785484919e85cdc40136c8e8f6f074e9d3d087f7a08015d9733a9
+solana-verify build --base-image "$BUILD_IMAGE" --library-name sprent_vault \
+  --cargo-build-sbf-args="--tools-version v1.52"
 sha256sum target/deploy/sprent_vault.so
 ```
 
 The ordinary local build above is a development check, not a substitute for this release build.
 
-## Verify after mainnet deployment
+## Verify from the public repository
 
-Run this from the exact commit used to build and deploy. The repository must be public and the mainnet program must exist. Use the same pinned build image as the release artifact. These flags are supported by solana-verify 0.5.2.
+The source revision below has the same program files, `Cargo.toml` and `Cargo.lock` as the mainnet documentation update. Rebuild that exact revision with the pinned release image and compare it with mainnet. Docker is required; the flags shown here are supported by solana-verify 0.5.2.
 
 ```bash
-: "${BUILD_IMAGE:?Use the exact release build image digest}"
-COMMIT=$(git rev-parse HEAD)
+COMMIT=4e4f209b6953cbc1c14947d872ac4c4a62ee934a
 solana-verify verify-from-repo \
   --url https://api.mainnet-beta.solana.com \
   --program-id GnfjrTU3LuytJm1BSLVWvBM721Jvs1dTQBa4aWAMUw3g \
   --library-name sprent_vault \
   --commit-hash "$COMMIT" \
-  --base-image "$BUILD_IMAGE" \
+  --base-image solanafoundation/solana-verifiable-build@sha256:2fc14309065785484919e85cdc40136c8e8f6f074e9d3d087f7a08015d9733a9 \
+  --cargo-build-sbf-args="--tools-version v1.52" \
   https://github.com/sprentpro/sprent-vault
 ```
 
-Do not use `--skip-build`: it skips the comparison. Publishing verification metadata on-chain is a separate signed action; do not accept that prompt unless authorized. Record the actual comparison result, commit, image digest and transaction before marking a mainnet release as verified.
+Do not use `--skip-build`: it skips building and verification. Publishing verification metadata on-chain is a separate signed action. Record the actual rebuild result and exact commit before claiming verification against public source.
 
-Mainnet verification status: **not run — no mainnet deployment yet**.
+Mainnet verification status: **release artifact hash match confirmed; public-source rebuild not performed in this check**.
