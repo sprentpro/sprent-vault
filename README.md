@@ -1,5 +1,9 @@
 <p align="center"><img src="assets/banner.png" alt="SPRENT" width="100%"></p>
 
+<p align="center">
+  <strong>CA:</strong> <a href="https://solscan.io/token/K8gETh1jTeAtMPKYyid5vFY5LrNLSNW6Yd1QZ1wpump"><code>K8gETh1jTeAtMPKYyid5vFY5LrNLSNW6Yd1QZ1wpump</code></a>
+</p>
+
 # SPRENT
 
 <p align="center">
